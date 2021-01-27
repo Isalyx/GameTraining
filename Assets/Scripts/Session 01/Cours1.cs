@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Variable : MonoBehaviour
+public class Cours1 : MonoBehaviour
 {
     int mon_integer = 10;
     float mon_float = 10.9f;
@@ -49,6 +49,7 @@ public class Variable : MonoBehaviour
 
     private void IfElseTest()
     {
+
         if (mon_integer == 10)
         {
             Debug.Log(mon_integer);
@@ -58,6 +59,7 @@ public class Variable : MonoBehaviour
         {
             Debug.Log(mon_integer);
             mon_integer = 10;
+            
         }
     }
 
