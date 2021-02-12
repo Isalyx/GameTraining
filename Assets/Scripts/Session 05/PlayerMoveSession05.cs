@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class PlayerMove : MonoBehaviour
+public class PlayerMoveSession05 : MonoBehaviour
 {
     public float JumpTime;
 
@@ -290,7 +290,7 @@ public class PlayerMove : MonoBehaviour
             {
                 m_jump = Vector3.up;
             }
-            else if(m_currentTime > JumpTime && m_currentTime < JumpTime * 2)
+            else if(m_currentTime.IsBetween(JumpTime, JumpTime*2))
             {
                 m_jump = Vector3.down;
             }
