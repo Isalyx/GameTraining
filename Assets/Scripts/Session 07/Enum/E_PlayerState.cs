@@ -5,6 +5,8 @@
     RUN,
     SPRINT,
     JUMP,
+    FALL,
+    SLIDE,
     CROUCH,
 }
 

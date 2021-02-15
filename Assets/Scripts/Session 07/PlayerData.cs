@@ -5,8 +5,6 @@ using UnityEngine;
 [System.Serializable]
 public class PlayerData
 {
-    PlayerManager m_playerManagerScript;
-
     [SerializeField]
     [Range(1f, 100f)]
     private float m_normalSpeed;
@@ -36,6 +34,16 @@ public class PlayerData
         private set { m_sprintMultiplicator = value; }
     }
 
+    [SerializeField]
+    [Range(1, 10)]
+    private int m_slideMultiplicator;
+    public int SlideMultiplicator
+    {
+        get { return m_slideMultiplicator; }
+        private set { m_slideMultiplicator = value; }
+    }
+
+
 
     [SerializeField]
     [Range(1f, 20f)]
@@ -47,7 +55,7 @@ public class PlayerData
     }
 
     [SerializeField]
-    [Range(1f, 100f)]
+    [Range(1f, 100000f)]
     private float m_jumpSpeed;
     public float JumpSpeed
     {
@@ -91,16 +99,13 @@ public class PlayerData
                 CurrentSpeed = NormalSpeed * SprintMultiplicator;
                 break;
             case E_PlayerState.CROUCH:
-                CurrentSpeed = CurrentSpeed * CrouchMultiplicator;
+                CurrentSpeed = NormalSpeed * CrouchMultiplicator;
+                break;
+            case E_PlayerState.SLIDE:
+                CurrentSpeed = NormalSpeed * SlideMultiplicator;
                 break;
             default: CurrentSpeed = 0;
                 break;
         }
-    }
-
-
-    public void Init(PlayerManager pm)
-    {
-        m_playerManagerScript = pm;
     }
 }

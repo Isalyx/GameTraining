@@ -29,12 +29,14 @@ public class PlayerManager : MonoBehaviour
         private set { m_rb = value; }
     }
 
+
     private PlayerInput m_playerInputScript;
     public PlayerInput PlayerInputScript
     {
         get { return m_playerInputScript; }
         private set { m_playerInputScript = value; }
     }
+
 
     private PlayerMovement m_playerMovementScript;
     public PlayerMovement PlayerMovementScript
@@ -43,6 +45,7 @@ public class PlayerManager : MonoBehaviour
         private set { m_playerMovementScript = value; }
     }
 
+
     private PlayerJump m_playerJumpScript;
     public PlayerJump PlayerJumpScript
     {
@@ -50,14 +53,13 @@ public class PlayerManager : MonoBehaviour
         private set { m_playerJumpScript = value; }
     }
 
-    private PlayerRotation m_playerRotationScript;
 
+    private PlayerRotation m_playerRotationScript;
     public PlayerRotation PlayerRotationScript
     {
         get { return m_playerRotationScript; }
         private set { m_playerRotationScript = value; }
     }
-
 
 
 
@@ -86,6 +88,8 @@ public class PlayerManager : MonoBehaviour
     float m_timeChangeState;
     #endregion
 
+    #region Unity Methods
+
     private void Awake()
     {
         Rb = GetComponent<Rigidbody>();
@@ -93,9 +97,6 @@ public class PlayerManager : MonoBehaviour
         PlayerMovementScript = GetComponent<PlayerMovement>();
         PlayerJumpScript = GetComponent<PlayerJump>();
         PlayerRotationScript = GetComponent<PlayerRotation>();
-
-
-        Data.Init(this);
     }
 
     private void Update()
@@ -117,35 +118,47 @@ public class PlayerManager : MonoBehaviour
             case E_PlayerState.JUMP:
                 JumpUpdate();
                 break;
+            case E_PlayerState.FALL:
+                break;
             case E_PlayerState.CROUCH:
                 CrouchUpdate();
+                break;
+            case E_PlayerState.SLIDE:
+                SlideUpdate();
                 break;
         }
     }
 
+    #endregion
+
+    #region State Update
+
     private void IdleUpdate()
     {
-        if(PlayerInputScript.DirectionMovement != Vector3.zero)
+        if (PlayerIsMoving())
         {
-            if(PlayerInputScript.IsWalking)
+            if (PlayerInputScript.IsWalking)
             {
                 NextState = E_PlayerState.WALK;
             }
-            else if(PlayerInputScript.IsSprintPress)
+            else if (PlayerInputScript.IsSprintPress)
             {
                 NextState = E_PlayerState.SPRINT;
-            }
-            else if(PlayerInputScript.IsCrouchPress)
-            {
-                NextState = E_PlayerState.CROUCH;
-            }
-            else if(PlayerInputScript.IsJumpPress)
-            {
-                NextState = E_PlayerState.JUMP;
             }
             else
             {
                 NextState = E_PlayerState.RUN;
+            }
+        }
+        else
+        {
+            if (PlayerInputScript.IsJumpPress)
+            {
+                NextState = E_PlayerState.JUMP;
+            }
+            else if (PlayerInputScript.IsCrouchPress)
+            {
+                NextState = E_PlayerState.CROUCH;
             }
         }
 
@@ -172,21 +185,21 @@ public class PlayerManager : MonoBehaviour
 
     private void WalkUpdate()
     {
-        if (PlayerInputScript.DirectionMovement == Vector3.zero)
+        if (!PlayerIsMoving())
         {
             NextState = E_PlayerState.IDLE;
         }
         else
         {
-            if(!PlayerInputScript.IsWalking)
+            if (!PlayerInputScript.IsWalking)
             {
                 NextState = E_PlayerState.RUN;
             }
-            else if(PlayerInputScript.IsCrouchPress)
+            else if (PlayerInputScript.IsCrouchPress)
             {
                 NextState = E_PlayerState.CROUCH;
             }
-            else if(PlayerInputScript.IsJumpPress)
+            else if (PlayerInputScript.IsJumpPress)
             {
                 NextState = E_PlayerState.JUMP;
             }
@@ -214,7 +227,7 @@ public class PlayerManager : MonoBehaviour
 
     private void RunUpdate()
     {
-        if (PlayerInputScript.DirectionMovement == Vector3.zero)
+        if (!PlayerIsMoving())
         {
             NextState = E_PlayerState.IDLE;
         }
@@ -257,19 +270,187 @@ public class PlayerManager : MonoBehaviour
 
     private void SprintUpdate()
     {
-        throw new NotImplementedException();
+        if (!PlayerIsMoving())
+        {
+            NextState = E_PlayerState.IDLE;
+        }
+        else
+        {
+            if (m_playerInputScript.IsJumpPress)
+            {
+                NextState = E_PlayerState.JUMP;
+            }
+            else if (!m_playerInputScript.IsSprintPress)
+            {
+                if (m_playerInputScript.IsWalking)
+                {
+                    NextState = E_PlayerState.WALK;
+                }
+                else
+                {
+                    NextState = E_PlayerState.RUN;
+                }
+            }
+            else if (m_playerInputScript.IsCrouchPress)
+            {
+                NextState = E_PlayerState.SLIDE;
+            }
+        }
+
+
+        switch (NextState)
+        {
+            case E_PlayerState.IDLE:
+                SetCurrentState(E_PlayerState.IDLE);
+                break;
+            case E_PlayerState.WALK:
+                SetCurrentState(E_PlayerState.WALK);
+                break;
+            case E_PlayerState.RUN:
+                SetCurrentState(E_PlayerState.RUN);
+                break;
+            case E_PlayerState.JUMP:
+                SetCurrentState(E_PlayerState.JUMP);
+                break;
+            case E_PlayerState.SLIDE:
+                SetCurrentState(E_PlayerState.SLIDE);
+                break;
+        }
     }
 
     private void JumpUpdate()
     {
-        throw new NotImplementedException();
+        // IS FALLING
+
+        if (Rb.velocity.y == 0)
+        {
+            NextState = E_PlayerState.IDLE;
+        }
+
+        if (NextState == E_PlayerState.IDLE)
+        {
+            SetCurrentState(E_PlayerState.IDLE);
+        }
     }
 
     private void CrouchUpdate()
     {
-        throw new NotImplementedException();
+        if (!m_playerInputScript.IsCrouchPress)
+        {
+            if (!PlayerIsMoving())
+            {
+                NextState = E_PlayerState.IDLE;
+            }
+            else if (m_playerInputScript.IsJumpPress)
+            {
+                NextState = E_PlayerState.JUMP;
+            }
+            else if (m_playerInputScript.IsSprintPress)
+            {
+                NextState = E_PlayerState.SPRINT;
+            }
+            else if (m_playerInputScript.IsWalking)
+            {
+                NextState = E_PlayerState.WALK;
+            }
+            else
+            {
+                NextState = E_PlayerState.RUN;
+            }
+        }  
+
+        switch (NextState)
+        {
+            case E_PlayerState.IDLE:
+                SetCurrentState(E_PlayerState.IDLE);
+                break;
+            case E_PlayerState.WALK:
+                SetCurrentState(E_PlayerState.WALK);
+                break;
+            case E_PlayerState.RUN:
+                SetCurrentState(E_PlayerState.RUN);
+                break;
+            case E_PlayerState.SPRINT:
+                SetCurrentState(E_PlayerState.SPRINT);
+                break;
+            case E_PlayerState.JUMP:
+                SetCurrentState(E_PlayerState.JUMP);
+                break;
+        }
     }
 
+    private void SlideUpdate()
+    {
+        if (!PlayerIsMoving())
+        {
+            if(m_playerInputScript.IsJumpPress)
+            {
+                NextState = E_PlayerState.JUMP;
+            }
+            else if (m_playerInputScript.IsCrouchPress)
+            {
+                NextState = E_PlayerState.CROUCH;
+            }
+            else
+            {
+                NextState = E_PlayerState.IDLE;
+            }
+        }
+        else
+        {
+            if(m_playerInputScript.IsJumpPress)
+            {
+                NextState = E_PlayerState.JUMP;
+            }
+            else if(!m_playerInputScript.IsCrouchPress)
+            {
+                if(m_playerInputScript.IsSprintPress)
+                {
+                    NextState = E_PlayerState.SPRINT;
+                }
+                else if(m_playerInputScript.IsWalking)
+                {
+                    NextState = E_PlayerState.WALK;
+                }
+                else
+                {
+                    NextState = E_PlayerState.RUN;
+                }
+            }
+            else if(!m_playerInputScript.IsSprintPress)
+            {
+                NextState = E_PlayerState.CROUCH;
+            }
+        }
+
+
+        switch (NextState)
+        {
+            case E_PlayerState.IDLE:
+                SetCurrentState(E_PlayerState.IDLE);
+                break;
+            case E_PlayerState.WALK:
+                SetCurrentState(E_PlayerState.WALK);
+                break;
+            case E_PlayerState.RUN:
+                SetCurrentState(E_PlayerState.RUN);
+                break;
+            case E_PlayerState.SPRINT:
+                SetCurrentState(E_PlayerState.SPRINT);
+                break;
+            case E_PlayerState.JUMP:
+                SetCurrentState(E_PlayerState.JUMP);
+                break;
+            case E_PlayerState.CROUCH:
+                SetCurrentState(E_PlayerState.CROUCH);
+                break;
+        }
+    }
+
+    #endregion
+
+
+    #region Private methods
 
     private void SetCurrentState(E_PlayerState nextState)
     {
@@ -281,4 +462,10 @@ public class PlayerManager : MonoBehaviour
         Debug.Log(CurrentState);
     }
 
+    private bool PlayerIsMoving()
+    {
+        return PlayerInputScript.DirectionMovement != Vector3.zero;
+    }
+
+    #endregion
 }

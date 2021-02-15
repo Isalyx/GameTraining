@@ -1,69 +1,95 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class PlayerJump : MonoBehaviour
 {
+    #region Properties
+
+    private bool m_isGrounded;
+    public bool IsGrounded
+    {
+        get { return m_isGrounded; }
+        private set { m_isGrounded = value; }
+    }
+
+    #endregion
+
+
     PlayerManager m_playerManagerScript;
 
     bool m_isJump;
-    private float m_currentTime;
+    bool m_isFall;
+
+    bool m_jumpRequest;
+
 
     [SerializeField]
-    private float m_jumpTime;
-
-    private Vector3 m_jumpVector;
+    private Transform m_rayGround;
 
     private void Awake()
     {
         m_playerManagerScript = GetComponent<PlayerManager>();
     }
 
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
-
     // Update is called once per frame
     void Update()
     {
+        //if (m_playerManagerScript.PlayerInputScript.IsJumpPress && !m_isJump)
+        //{
+        //    m_isJump = true;
+        //    m_currentTime = 0f;
+        //}
+
+        //SetJumpVector();
+        //MakeJump();
+
+
         if (m_playerManagerScript.PlayerInputScript.IsJumpPress && !m_isJump)
         {
-            m_isJump = true;
-            m_currentTime = 0f;
+            m_jumpRequest = true;
         }
 
-        SetJumpVector();
-        MakeJump();
+        CheckIsGrounded();
+        
+
     }
 
 
-
-    private void SetJumpVector()
+    private void FixedUpdate()
     {
-        if (m_isJump)
+        if (m_jumpRequest)
         {
-            if (m_currentTime < m_jumpTime)
-            {
-                m_jumpVector = Vector3.up;
-            }
-            else if (m_currentTime.IsBetween(m_jumpTime, m_jumpTime * 2))
-            {
-                m_jumpVector = Vector3.zero;
-            }
-            else if (m_currentTime > m_jumpTime * 2)
-            {
-                m_jumpVector = Vector3.zero;
-                m_isJump = false;
-            }
-            m_currentTime += Time.deltaTime;
+            MakeJump();
+            m_jumpRequest = false;
         }
     }
 
     private void MakeJump()
     {
-        transform.Translate(m_jumpVector * m_playerManagerScript.Data.JumpSpeed * Time.deltaTime);
+        m_isJump = true;
+        m_playerManagerScript.Rb.AddForce(Vector3.up * m_playerManagerScript.Data.JumpSpeed * Time.fixedDeltaTime, ForceMode.Impulse);
     }
+
+
+    private void CheckIsGrounded()
+    {
+        if(Physics.Raycast(m_rayGround.position, -transform.up, 0.1f))
+        {
+            m_isGrounded = true;
+            m_isJump = false;
+        }
+        else
+        {
+            m_isGrounded = false;
+        }
+    }
+
+
+    private void OnDrawGizmos()
+    {
+        Debug.DrawRay(m_rayGround.position, -transform.up, Color.red);
+    }
+
+
+    // RAYCAST
 }
